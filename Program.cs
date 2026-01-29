@@ -1,5 +1,6 @@
 ﻿#define PERFORM_CONST_PROPAGATION
 
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
@@ -598,10 +599,18 @@ namespace JoshBe_Compilers
 
             Console.WriteLine($"[<node id='n{ID}'>{OpCode}|");
             Console.WriteLine($"    Value: {ConstValue}");
-            Console.WriteLine($"    Symbol: {DebugSymbol?.Name}]");
+            Console.WriteLine($"    Symbol: {DebugSymbol?.Name}");
 
-            //InputRegions.Print(printedRegions, printedNodes);
-            //Console.WriteLine($"[<node id='n{ID}'>]-->[<region id='r{Region.ID}'>]");
+            if (OpCode == OpCodes.Phi)
+            {
+                Console.WriteLine("|");
+                for (int i = 0; i < InputRegions.Length; i++)
+                {
+                    var region = InputRegions[i];
+                    Console.WriteLine($"    {i}: Region {region.ID}");
+                }
+            }
+            Console.WriteLine("]");
 
             if (OpCode == OpCodes.Phi)
             {
@@ -611,16 +620,16 @@ namespace JoshBe_Compilers
                     var instr = InputNodes[i];
                     region.Print(printedRegions, printedNodes);
                     instr.Print(printedRegions, printedNodes);
-                    Console.WriteLine($"[<node id='n{ID}'>]->[<node id='n{instr.ID}'>]");
-                    Console.WriteLine($"[<node id='n{instr.ID}'>]-->[<region id='r{region.ID}'>]");
+                    Console.WriteLine($"[<node id='n{ID}'>]->{i}[<node id='n{instr.ID}'>]");
                 }
             }
             else
             {
-                foreach (var instr in InputNodes)
+                for (int i = 0; i < InputNodes.Length; i++)
                 {
+                    var instr = InputNodes[i];
                     instr.Print(printedRegions, printedNodes);
-                    Console.WriteLine($"[<node id='n{ID}'>]->[<node id='n{instr.ID}'>]");
+                    Console.WriteLine($"[<node id='n{ID}'>]->{i}[<node id='n{instr.ID}'>]");
                 }
             }
         }
@@ -675,14 +684,16 @@ namespace JoshBe_Compilers
             }
             Console.WriteLine("]");
 
-            foreach (var region in InputRegions ?? Array.Empty<ControlBlock>())
+            for (int i = 0; i < (InputRegions?.Length ?? 0); i++)
             {
+                var region = InputRegions![i];
                 region.Print(printedRegions, printedNodes);
-                Console.WriteLine($"[<region id='r{ID}'>]<--[<region id='r{region.ID}'>]");
+                Console.WriteLine($"[<region id='r{region.ID}'>]-->[<region id='r{ID}'>]");
             }
 
-            foreach (var instr in OutputNodes ?? Array.Empty<Instruction>())
+            for (int i = 0; i < (OutputNodes?.Length ?? 0); i++)
             {
+                var instr = OutputNodes![i];
                 instr.Print(printedRegions, printedNodes);
                 Console.WriteLine($"[<region id='r{ID}'>]->[<node id='n{instr.ID}'>]");
             }
